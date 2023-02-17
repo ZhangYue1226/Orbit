@@ -2,6 +2,7 @@
 # All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
+# 使用微分逆运动学进行轨迹规划（好像没有避障？）思路：求当前位姿与目标位姿的偏差，取一小个微分delta。返回：关节位置+往目标去的小微分。因此，可以控制机械臂到达目标位姿。
 
 import torch
 from dataclasses import MISSING
@@ -228,7 +229,7 @@ class DifferentialInverseKinematics:
         else:
             pose_error = torch.cat((position_error, axis_angle_error), dim=1)
             delta_joint_positions = self._compute_delta_dof_pos(delta_pose=pose_error, jacobian=jacobian)
-        # return the desired joint positions
+        # return the desired joint positions  返回目标关节位置
         return joint_positions + delta_joint_positions
 
     """
