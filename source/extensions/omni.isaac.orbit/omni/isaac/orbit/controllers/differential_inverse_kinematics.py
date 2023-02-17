@@ -22,10 +22,12 @@ class DifferentialInverseKinematicsCfg:
     """Configuration for inverse differential kinematics controller."""
 
     command_type: str = MISSING
-    """Type of command: "position_abs", "position_rel", "pose_abs", "pose_rel"."""
+    """Type of command: "position_abs", "position_rel", "pose_abs", "pose_rel".""" 
+    """绝对位置，相对位置，绝对位姿，相对位姿"""
 
     ik_method: str = MISSING
     """Method for computing inverse of Jacobian: "pinv", "svd", "trans", "dls"."""
+    """详见下面解释（为了处理雅可比矩阵中的奇异性，支持以下方法来计算雅可比矩阵的逆: "pinv", "svd", "trans", "dls"）"""
 
     ik_params: Optional[Dict[str, float]] = None
     """Parameters for the inverse-kinematics method. (default: obj:`None`).
@@ -53,13 +55,14 @@ class DifferentialInverseKinematicsCfg:
 
 
 class DifferentialInverseKinematics:
-    """Inverse differential kinematics controller.
+    """Inverse differential kinematics controller. 逆微分运动学控制器
 
     This controller uses the Jacobian mapping from joint-space velocities to end-effector velocities
     to compute the delta-change in the joint-space that moves the robot closer to a desired end-effector
-    position.
+    position.该控制器使用 关节空间速度到末端执行器速度的雅可比矩阵映射 来计算关节空间中的delta-变化，从而将机器人移动到期望的末端执行器位置。
 
     To deal with singularity in Jacobian, the following methods are supported for computing inverse of the Jacobian:
+    为了处理雅可比矩阵中的奇异性，支持以下方法来计算雅可比矩阵的逆:
         - "pinv": Moore-Penrose pseudo-inverse
         - "svd": Adaptive singular-value decomposition (SVD)
         - "trans": Transpose of matrix
@@ -81,7 +84,7 @@ class DifferentialInverseKinematics:
     """Default parameters for different inverse kinematics approaches."""
 
     def __init__(self, cfg: DifferentialInverseKinematicsCfg, num_robots: int, device: str):
-        """Initialize the controller.
+        """Initialize the controller.初始化控制器
 
         Args:
             cfg (DifferentialInverseKinematicsCfg): The configuration for the controller.
@@ -106,17 +109,17 @@ class DifferentialInverseKinematics:
         self._ik_params = self._DEFAULT_IK_PARAMS[self.cfg.ik_method].copy()
         if self.cfg.ik_params is not None:
             self._ik_params.update(self.cfg.ik_params)
-        # end-effector offsets
-        # -- position
+        # end-effector offsets 末端执行器EE的偏移
+        # -- position 位置
         tool_child_link_pos = torch.tensor(self.cfg.position_offset, device=self._device)
         self._tool_child_link_pos = tool_child_link_pos.repeat(self.num_robots, 1)
-        # -- orientation
+        # -- orientation 方向
         tool_child_link_rot = torch.tensor(self.cfg.rotation_offset, device=self._device)
         self._tool_child_link_rot = tool_child_link_rot.repeat(self.num_robots, 1)
-        # transform from tool -> parent frame
+        # transform from tool -> parent frame 从工具tool-->基坐标的转换
         self._tool_parent_link_rot = quat_inv(self._tool_child_link_rot)
         self._tool_parent_link_pos = -quat_apply(self._tool_parent_link_rot, self._tool_child_link_pos)
-        # scaling of command
+        # scaling of command 命令的比例
         self._position_command_scale = torch.diag(torch.tensor(self.cfg.position_command_scale, device=self._device))
         self._rotation_command_scale = torch.diag(torch.tensor(self.cfg.rotation_command_scale, device=self._device))
 
@@ -133,6 +136,7 @@ class DifferentialInverseKinematics:
     @property
     def num_actions(self) -> int:
         """Dimension of the action space of controller."""
+        """控制器的行为空间的维度"""
         if "position" in self.cfg.command_type:
             return 3
         elif self.cfg.command_type == "pose_rel":
@@ -152,7 +156,8 @@ class DifferentialInverseKinematics:
 
     def set_command(self, command: torch.Tensor):
         """Set target end-effector pose command."""
-        # check input size
+        """设置EE位姿的目标的命令"""
+        # check input size 检查输入
         if command.shape != (self.num_robots, self.num_actions):
             raise ValueError(
                 f"Invalid command shape '{command.shape}'. Expected: '{(self.num_robots, self.num_actions)}'."
@@ -167,12 +172,18 @@ class DifferentialInverseKinematics:
         jacobian: torch.Tensor,
         joint_positions: torch.Tensor,
     ) -> torch.Tensor:
+        """疑问：上面的jacobian: torch.Tensor是输入的一个参数吗？是什么参数呢？"""
         """Performs inference with the controller.
 
         Returns:
             torch.Tensor: The target joint positions commands.
         """
-        # compute the desired end-effector pose
+        """
+        使用控制器执行推理。
+        返回：目标关节位置命令。
+        """
+        
+        # compute the desired end-effector pose 计算所需的末端执行器姿态
         if "position_rel" in self.cfg.command_type:
             # scale command
             self._command @= self._position_command_scale
@@ -196,17 +207,17 @@ class DifferentialInverseKinematics:
         else:
             raise ValueError(f"Invalid control command: {self.cfg.command_type}.")
 
-        # transform from ee -> parent
+        # transform from ee -> parent 从EE——>基坐标（目标位置）
         # TODO: Make this optional to reduce overhead?
         desired_parent_pos, desired_parent_rot = combine_frame_transforms(
             self.desired_ee_pos, self.desired_ee_rot, self._tool_parent_link_pos, self._tool_parent_link_rot
         )
         # transform from ee -> parent
-        # TODO: Make this optional to reduce overhead?
+        # TODO: Make this optional to reduce overhead? 从EE——>基坐标（当前位置）
         current_parent_pos, current_parent_rot = combine_frame_transforms(
             current_ee_pos, current_ee_rot, self._tool_parent_link_pos, self._tool_parent_link_rot
         )
-        # compute pose error between current and desired
+        # compute pose error between current and desired 计算当前与目标坐标的位姿误差
         position_error, axis_angle_error = compute_pose_error(
             current_parent_pos, current_parent_rot, desired_parent_pos, desired_parent_rot, rot_error_type="axis_angle"
         )
