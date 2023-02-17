@@ -2,6 +2,7 @@
 # All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
+# 使用RMPFlow，计算并返回关节的下一个动作（即：下一个位置，下一个速度），rmpflow算法中需要输入机器人碰撞路径模型描述：collision_file。
 
 import torch
 from dataclasses import MISSING
