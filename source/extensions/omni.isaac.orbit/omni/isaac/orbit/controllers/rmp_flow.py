@@ -26,6 +26,7 @@ class RmpFlowControllerCfg:
     """Path to the URDF model of the robot."""
     collision_file: str = MISSING
     """Path to collision model description of the robot."""
+    """机器人碰撞路径模型描述。"""
     frame_name: str = MISSING
     """Name of the robot frame for task space (must be present in the URDF)."""
     evaluations_per_frame: int = MISSING
@@ -36,9 +37,10 @@ class RmpFlowControllerCfg:
 
 class RmpFlowController:
     """Wraps around RMP-Flow from IsaacSim for batched environments."""
+    """ 包装来自IsaacSim的rm - flow，用于批处理环境。"""
 
     def __init__(self, cfg: RmpFlowControllerCfg, prim_paths_expr: str, device: str):
-        """Initialize the controller.
+        """Initialize the controller. 初始化控制器
 
         Args:
             cfg (RmpFlowControllerCfg): The configuration for the controller.
@@ -58,13 +60,13 @@ class RmpFlowController:
         # find all prims
         self._prim_paths = prim_utils.find_matching_prim_paths(prim_paths_expr)
         self.num_robots = len(self._prim_paths)
-        # create all franka robots references and their controllers
+        # create all franka robots references and their controllers 创建机器人的参考和其控制器
         self.articulation_policies = list()
         for prim_path in self._prim_paths:
-            # add robot reference
+            # add robot reference 添加机器人参考
             robot = Articulation(prim_path)
             robot.initialize()
-            # add controller
+            # add controller 添加控制器（包括了collision碰撞路径模型描述）
             rmpflow = RmpFlow(
                 rmpflow_config_path=self.cfg.config_file,
                 urdf_path=self.cfg.urdf_file,
@@ -73,16 +75,16 @@ class RmpFlowController:
                 evaluations_per_frame=self.cfg.evaluations_per_frame,
                 ignore_robot_state_updates=self.cfg.ignore_robot_state_updates,
             )
-            # wrap rmpflow to connect to the Franka robot articulation
+            # wrap rmpflow to connect to the Franka robot articulation 包装rmpflow，以便于和Franka机器人关节连接
             articulation_policy = ArticulationMotionPolicy(robot, rmpflow, physics_dt)
             self.articulation_policies.append(articulation_policy)
-        # get number of active joints
+        # get number of active joints 获取活动关节数量
         self.active_dof_names = self.articulation_policies[0].get_motion_policy().get_active_joints()
         self.num_dof = len(self.active_dof_names)
         # create buffers
-        # -- for storing command
+        # -- for storing command 存储命令
         self._command = torch.zeros(self.num_robots, self.num_actions, device=self._device)
-        # -- for policy output
+        # -- for policy output  输出
         self.dof_pos_target = torch.zeros((self.num_robots, self.num_dof), device=self._device)
         self.dof_vel_target = torch.zeros((self.num_robots, self.num_dof), device=self._device)
 
@@ -109,27 +111,29 @@ class RmpFlowController:
         self._command[:] = command
 
     def compute(self) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Performs inference with the controller.
+        """Performs inference with the controller. 使用控制器执行推理。
 
         Returns:
             Tuple[torch.Tensor, torch.Tensor]: The target joint positions and velocity commands.
+            返回：目标关节位置和速度命令
         """
         # convert command to numpy
         command = self._command.cpu().numpy()
-        # compute control actions
+        # compute control actions 计算控制动作
         for i, policy in enumerate(self.articulation_policies):
             # enable type-hinting
             policy: ArticulationMotionPolicy
-            # set rmpflow target to be the current position of the target cube.
+            # set rmpflow target to be the current position of the target cube.将rmpflow目标设置为目标多维数据集的当前位置。
             policy.get_motion_policy().set_end_effector_target(
                 target_position=command[i, 0:3], target_orientation=command[i, 3:7]
             )
-            # apply action on the robot
+            # apply action on the robot 将动作应用到机器人上（获得关节的下一个动作）
             action = policy.get_next_articulation_action()
             # copy actions into buffer
             # TODO: Make this more efficient?
             for dof_index in range(self.num_dof):
-                self.dof_pos_target[i, dof_index] = action.joint_positions[dof_index]
-                self.dof_vel_target[i, dof_index] = action.joint_velocities[dof_index]
+                self.dof_pos_target[i, dof_index] = action.joint_positions[dof_index] #关节的下一个位置
+                self.dof_vel_target[i, dof_index] = action.joint_velocities[dof_index] #关节的下一个速度
 
         return self.dof_pos_target, self.dof_vel_target
+        # 返回关节的下一个动作（即：下一个位置，下一个速度）
