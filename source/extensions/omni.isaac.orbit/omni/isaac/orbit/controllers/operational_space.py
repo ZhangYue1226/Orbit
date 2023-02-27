@@ -14,6 +14,7 @@ from omni.isaac.orbit.utils.math import apply_delta_pose, compute_pose_error
 @configclass
 class OperationSpaceControllerCfg:
     """Configuration for operation-space controller."""
+    """操作空间控制器的配置"""
 
     command_types: Sequence[str] = MISSING
     """Type of command.
@@ -28,20 +29,26 @@ class OperationSpaceControllerCfg:
 
     uncouple_motion_wrench: bool = False
     """Whether to decouple the wrench computation from task-space pose (motion) error."""
+    """是否将扳手计算与任务空间姿态误差解耦"""
 
     motion_control_axes: Sequence[int] = (1, 1, 1, 1, 1, 1)
     """Motion direction to control. Mark as 0/1 for each axis."""
+    """要控制的运动方向"""
     force_control_axes: Sequence[int] = (0, 0, 0, 0, 0, 0)
     """Force direction to control. Mark as 0/1 for each axis."""
+    """要控制的力的方向"""
 
     inertial_compensation: bool = False
     """Whether to perform inertial compensation for motion control (inverse dynamics)."""
+    """是否展示运动控制的内部补偿（逆动力学）"""
 
     gravity_compensation: bool = False
     """Whether to perform gravity compensation."""
+    """是否重力补偿"""
 
     stiffness: Union[float, Sequence[float]] = MISSING
     """The positional gain for determining wrenches based on task-space pose error."""
+    """"""
 
     damping_ratio: Optional[Union[float, Sequence[float]]] = None
     """The damping ratio is used in-conjunction with positional gain to compute wrenches
