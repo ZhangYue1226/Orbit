@@ -34,7 +34,7 @@ class RmpFlowControllerCfg:
     """Number of substeps during Euler integration inside LULA world model."""
     ignore_robot_state_updates: bool = False
     """If true, then state of the world model inside controller is rolled out. (default: False)."""
-
+    """MPiNets:输入：a robot configuration(qt)（各关节初始位姿）, a segmented calibrated point cloud (zt)(相当于路径描述？)."""
 
 class RmpFlowController:
     """Wraps around RMP-Flow from IsaacSim for batched environments."""
