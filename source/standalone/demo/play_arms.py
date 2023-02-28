@@ -5,6 +5,7 @@
 
 """
 This script demonstrates how to use the physics engine to simulate a single-arm manipulator.
+这个脚本演示了如何使用物理引擎来模拟一个单臂机械手。
 
 We currently support the following robots:
 
