@@ -129,6 +129,7 @@ class RmpFlowController:
             policy.get_motion_policy().set_end_effector_target(
                 target_position=command[i, 0:3], target_orientation=command[i, 3:7]
             )
+            # command 0:3 是目标位置target position，3:7是目标方向target orientation
             # apply action on the robot 将动作应用到机器人上（获得关节的下一个动作）
             action = policy.get_next_articulation_action()
             # copy actions into buffer
