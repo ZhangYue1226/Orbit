@@ -5,12 +5,14 @@
 
 """
 This script demonstrates how to use the physics engine to simulate a mobile manipulator.
+这个脚本演示了如何使用物理引擎来模拟移动操作器。
 
 We currently support the following robots:
 
 * Franka Emika Panda on a Clearpath Ridgeback Omni-drive Base
 
 From the default configuration file for these robots, zero actions imply a default pose.
+从这些机器人的默认配置文件来看，零动作意味着默认姿势。
 """
 
 """Launch Isaac Sim Simulator first."""
@@ -76,12 +78,13 @@ Main
 
 def main():
     """Spawns a mobile manipulator and applies random joint position commands."""
+    """生成一个移动机械手，并应用随机的关节位置命令"""
 
     # Load kit helper
     sim = SimulationContext(stage_units_in_meters=1.0, physics_dt=0.01, rendering_dt=0.01, backend="torch")
     # Set main camera
     set_camera_view([1.5, 1.5, 1.5], [0.0, 0.0, 0.0])
-    # Spawn things into stage
+    # Spawn things into stage 将东西刷到舞台上
     robot = MobileManipulator(cfg=RIDGEBACK_FRANKA_PANDA_CFG)
     robot.spawn("/World/Robot_1", translation=(0.0, -1.0, 0.0))
     robot.spawn("/World/Robot_2", translation=(0.0, 1.0, 0.0))
@@ -97,17 +100,17 @@ def main():
     # Now we are ready!
     print("[INFO]: Setup complete...")
 
-    # dummy action
-    actions = torch.rand(robot.count, robot.num_actions, device=robot.device)
+    # dummy action 虚拟行动
+    actions = torch.rand(robot.count, robot.num_actions, device=robot.device) # 返回格式为[_,_]的随机张量
     actions[:, 0 : robot.base_num_dof] = 0.0
     actions[:, -1] = -1
 
-    # Define simulation stepping
+    # Define simulation stepping 定义模拟步进
     sim_dt = sim.get_physics_dt()
     # episode counter
     sim_time = 0.0
     ep_step_count = 0
-    # Simulate physics
+    # Simulate physics  物理模拟
     while simulation_app.is_running():
         # If simulation is stopped, then exit.
         if sim.is_stopped():
@@ -124,16 +127,16 @@ def main():
             dof_pos, dof_vel = robot.get_default_dof_state()
             robot.set_dof_state(dof_pos, dof_vel)
             robot.reset_buffers()
-            # reset command
+            # reset command 重新设置命令
             actions = torch.rand(robot.count, robot.num_actions, device=robot.device)
             actions[:, 0 : robot.base_num_dof] = 0.0
             actions[:, -1] = 1
-            print(">>>>>>>> Reset! Opening gripper.")
-        # change the gripper action
+            print(">>>>>>>> Reset! Opening gripper.") # 打印：">>>重置！张开抓夹。"
+        # change the gripper action 更改抓夹action
         if ep_step_count % 200:
-            # flip command
+            # flip command 翻转命令
             actions[:, -1] = -actions[:, -1]
-        # change the base action
+        # change the base action 改变base action
         if ep_step_count == 200:
             actions[:, : robot.base_num_dof] = 0.0
             actions[:, 0] = 1.0
@@ -158,7 +161,7 @@ def main():
         # change the arm action
         if ep_step_count % 100:
             actions[:, robot.base_num_dof : -1] = torch.rand(robot.count, robot.arm_num_dof, device=robot.device)
-        # apply action
+        # apply action 应用actions
         robot.apply_action(actions)
         # perform step
         sim.step()
