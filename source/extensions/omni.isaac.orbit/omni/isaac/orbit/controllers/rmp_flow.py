@@ -10,7 +10,7 @@ from typing import Tuple
 
 import omni.isaac.core.utils.prims as prim_utils
 from omni.isaac.core.articulations import Articulation
-from omni.isaac.core.simulation_context import SimulationContext
+from omni.isaac.core.simulation_context import SimulationContext # 
 from omni.isaac.motion_generation import ArticulationMotionPolicy
 from omni.isaac.motion_generation.lula import RmpFlow
 
@@ -125,7 +125,7 @@ class RmpFlowController:
         for i, policy in enumerate(self.articulation_policies):
             # enable type-hinting
             policy: ArticulationMotionPolicy
-            # set rmpflow target to be the current position of the target cube.将rmpflow目标设置为目标多维数据集的当前位置。
+            # set rmpflow target to be the current position of the target cube.将rmpflow目标设置为目标数据集的当前位置。
             policy.get_motion_policy().set_end_effector_target(
                 target_position=command[i, 0:3], target_orientation=command[i, 3:7]
             )
