@@ -45,13 +45,13 @@ class RmpFlowController:
 
         Args:
             cfg (RmpFlowControllerCfg): The configuration for the controller.
-            prim_paths_expr (str): The expression to find the articulation prim paths.
-            device (str): The device to use for computation.
+            prim_paths_expr (str): The expression to find the articulation prim paths. 寻找机械手路径的语句
+            device (str): The device to use for computation. 用于计算的设备(cuda/gpu)
 
         Raises:
             NotImplementedError: When the robot name is not supported.
         """
-        # store input
+        # store input 存储输入
         self.cfg = cfg
         self._device = device
 
@@ -84,7 +84,7 @@ class RmpFlowController:
         self.num_dof = len(self.active_dof_names)
         # create buffers
         # -- for storing command 存储命令
-        self._command = torch.zeros(self.num_robots, self.num_actions, device=self._device)
+        self._command = torch.zeros(self.num_robots, self.num_actions, device=self._device) # torch.zeros():输出指定格式的0张量
         # -- for policy output  输出
         self.dof_pos_target = torch.zeros((self.num_robots, self.num_dof), device=self._device)
         self.dof_vel_target = torch.zeros((self.num_robots, self.num_dof), device=self._device)
@@ -108,7 +108,8 @@ class RmpFlowController:
 
     def set_command(self, command: torch.Tensor):
         """Set target end-effector pose command."""
-        # store command
+        """设置EE目标姿态的命令"""
+        # store command 保存命令
         self._command[:] = command
 
     def compute(self) -> Tuple[torch.Tensor, torch.Tensor]:
