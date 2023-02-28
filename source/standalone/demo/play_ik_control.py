@@ -5,9 +5,11 @@
 
 """
 This script demonstrates how to use the inverse kinematics controller with the simulator.
+这个脚本演示了如何使用带有模拟器的逆运动学控制器。
 
 The differential IK controller can be configured in different modes. It uses the Jacobians computed by
 PhysX. This helps perform parallelized computation of the inverse kinematics.
+差分IK控制器可以配置在不同的模式。它使用由PhysX计算的雅可比矩阵。这有助于实现逆运动学的并行计算。
 """
 
 """Launch Isaac Sim Simulator first."""
@@ -58,6 +60,7 @@ Main
 
 def main():
     """Spawns a single-arm manipulator and applies commands through inverse kinematics control."""
+    """生成一个单臂机械手，并通过逆运动学控制来应用命令。"""
 
     # Load kit helper
     sim = SimulationContext(
@@ -108,10 +111,10 @@ def main():
         robot_cfg = UR10_CFG
     else:
         raise ValueError(f"Robot {args_cli.robot} is not supported. Valid: franka_panda, ur10")
-    # configure robot settings to use IK controller
+    # configure robot settings to use IK controller   配置机器人设置使用IK控制器
     robot_cfg.data_info.enable_jacobian = True
     robot_cfg.rigid_props.disable_gravity = True
-    # spawn robot
+    # spawn robot 将机器人显示在舞台上
     robot = SingleArmManipulator(cfg=robot_cfg)
     robot.spawn("/World/envs/env_0/Robot", translation=(0.0, 0.0, 0.0))
 
@@ -119,15 +122,15 @@ def main():
     num_envs = args_cli.num_envs
     envs_prim_paths = cloner.generate_paths("/World/envs/env", num_paths=num_envs)
     envs_positions = cloner.clone(source_prim_path="/World/envs/env_0", prim_paths=envs_prim_paths)
-    # convert environment positions to torch tensor
+    # convert environment positions to torch tensor 将环境位置转换为torch张量
     envs_positions = torch.tensor(envs_positions, dtype=torch.float, device=sim.device)
-    # filter collisions within each environment instance
+    # filter collisions within each environment instance  在每个环境实例中过滤碰撞            ？？何意？？
     physics_scene_path = sim.get_physics_context().prim_path
     cloner.filter_collisions(
         physics_scene_path, "/World/collisions", envs_prim_paths, global_paths=["/World/defaultGroundPlane"]
     )
 
-    # Create controller
+    # Create controller 创建控制器
     # the controller takes as command type: {position/pose}_{abs/rel}
     ik_control_cfg = DifferentialInverseKinematicsCfg(
         command_type="pose_abs",
@@ -137,7 +140,7 @@ def main():
     )
     ik_controller = DifferentialInverseKinematics(ik_control_cfg, num_envs, sim.device)
 
-    # Play the simulator
+    # Play the simulator 启动模拟器
     sim.reset()
     # Acquire handles
     # Initialize handles
@@ -153,8 +156,8 @@ def main():
     ik_commands = torch.zeros(robot.count, ik_controller.num_actions, device=robot.device)
     robot_actions = torch.ones(robot.count, robot.num_actions, device=robot.device)
 
-    # Set end effector goals
-    # Define goals for the arm
+    # Set end effector goals 设置EE目标
+    # Define goals for the arm 为arm定义目标
     ee_goals = [
         [0.5, 0.5, 0.7, 0.707, 0, 0.707, 0],
         [0.5, -0.4, 0.6, 0.707, 0.707, 0.0, 0.0],
@@ -198,22 +201,22 @@ def main():
             ik_commands[:] = ee_goals[current_goal_idx]
             # change goal
             current_goal_idx = (current_goal_idx + 1) % len(ee_goals)
-        # set the controller commands
+        # set the controller commands 设置控制器命令
         ik_controller.set_command(ik_commands)
-        # compute the joint commands
+        # compute the joint commands 计算关节命令
         robot_actions[:, : robot.arm_num_dof] = ik_controller.compute(
             robot.data.ee_state_w[:, 0:3] - envs_positions,
             robot.data.ee_state_w[:, 3:7],
             robot.data.ee_jacobian,
             robot.data.arm_dof_pos,
         )
-        # in some cases the zero action correspond to offset in actuators
-        # so we need to subtract these over here so that they can be added later on
+        # in some cases the zero action correspond to offset in actuators  在某些情况下，零动作对应于执行器中的偏移量
+        # so we need to subtract these over here so that they can be added later on  所以我们需要减去这里的这些，这样以后就可以相加了
         arm_command_offset = robot.data.actuator_pos_offset[:, : robot.arm_num_dof]
         # offset actuator command with position offsets
         # note: valid only when doing position control of the robot
         robot_actions[:, : robot.arm_num_dof] -= arm_command_offset
-        # apply actions
+        # apply actions  应用actions
         robot.apply_action(robot_actions)
         # perform step
         sim.step()
