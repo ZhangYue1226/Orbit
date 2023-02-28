@@ -26,6 +26,7 @@ class PinholeCameraCfg:
         The parameter is kept default from USD if it is set to :obj:`None`. This includes the default
         parameters (in case the sensor is created) or the ones set by the user (in case the sensor is
         loaded from existing USD stage).
+        如果该参数被设置为:obj: ' None '，则从 USD模型中保持默认值。这包括默认参数(如果传感器是创建的)或用户设置的参数(如果传感器是从现有USD模型阶段加载的)。
 
         Reference:
             * https://docs.omniverse.nvidia.com/prod_extensions/prod_extensions/ext_replicator/annotators_details.html
