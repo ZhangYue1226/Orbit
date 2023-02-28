@@ -5,7 +5,7 @@
 
 """
 This script demonstrates how to use the physics engine to simulate a mobile manipulator.
-这个脚本演示了如何使用物理引擎来模拟移动操作器。
+这个脚本演示了如何使用物理引擎来模拟mobile manipulator。
 
 We currently support the following robots:
 
