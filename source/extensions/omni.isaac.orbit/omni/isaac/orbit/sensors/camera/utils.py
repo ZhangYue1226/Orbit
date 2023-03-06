@@ -85,10 +85,11 @@ def create_pointcloud_from_depth(
     orientation: Optional[Sequence[float]] = None,
     device: Optional[Union[torch.device, str]] = None,
 ) -> Union[np.ndarray, torch.Tensor]:
-    r"""Creates pointcloud from input depth image and camera intrinsic matrix.
+    r"""Creates pointcloud from input depth image and camera intrinsic matrix.从输入深度图像和相机固有矩阵创建点云
 
     This function creates a pointcloud from a depth image and camera intrinsic matrix. The pointcloud is
     computed using the following equation:
+    这个函数用于从深度图像和相机固有矩阵创建点云。
 
     .. math::
         p_{camera} = K^{-1} \times [u, v, 1]^T \times d
@@ -125,17 +126,19 @@ def create_pointcloud_from_depth(
           An array/tensor of shape (N, 3) comprising of 3D coordinates of points.
           The returned datatype is torch if input depth is of type torch.tensor or wp.array. Otherwise, a np.ndarray
           is returned.
+    返回：
+          N*3的张量，包含点的3D坐标。
     """
     # We use PyTorch here for matrix multiplication since it is compiled with Intel MKL while numpy
     # by default uses OpenBLAS. With PyTorch (CPU), we could process a depth image of size (480, 640)
-    # in 0.0051 secs, while with numpy it took 0.0292 secs.
+    # in 0.0051 secs, while with numpy it took 0.0292 secs.在这里用pytorch处理矩阵乘法，因为pytorch处理一张大小为480*640的深度图像用时0.0051sec，numpy用时0.0292sec。（pytorch更快）
 
     # convert to numpy matrix
     is_numpy = isinstance(depth, np.ndarray)
     # decide device
     if device is None and is_numpy:
         device = torch.device("cpu")
-    # convert depth to torch tensor
+    # convert depth to torch tensor  将深度转换为torch张量
     depth = convert_to_torch(depth, dtype=torch.float32, device=device)
     # update the device with the device of the depth image
     # note: this is needed since warp does not provide the device directly
@@ -203,6 +206,8 @@ def create_pointcloud_from_rgbd(
           A tuple of (N, 3) arrays or tensors containing the 3D coordinates of points and their RGB color respectively.
           The returned datatype is torch if input depth is of type torch.tensor or wp.array. Otherwise, a np.ndarray
           is returned.
+    返回：
+          (N, 3)数组或张量的元组，分别包含点的3D坐标和它们的RGB颜色。如果输入深度类型为torch/tensor或wp/array，则返回的数据类型为torch。否则，返回np/ndarray。
     """
     # check valid inputs
     if rgb is not None and not isinstance(rgb, tuple):
