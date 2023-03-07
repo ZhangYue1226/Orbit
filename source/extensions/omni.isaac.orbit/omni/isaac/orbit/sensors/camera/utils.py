@@ -19,6 +19,7 @@ __all__ = ["transform_points", "create_pointcloud_from_depth", "create_pointclou
 
 """
 Depth <-> Pointcloud conversions.
+深度图<->点云  的转换
 """
 
 
