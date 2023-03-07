@@ -33,15 +33,18 @@ def transform_points(
 
     This function uses torch operations to transform points from a source frame to a target frame. The
     transformation is defined by the position ``t`` and orientation ``R`` of the target frame in the source frame.
-
+   
+    这个函数使用火炬操作将点从源帧转换到目标帧。
+    变换由目标坐标系在源坐标系中的位置t和方向R定义。
+    
     .. math::
         p_{target} = R_{target} \times p_{source} + t_{target}
 
     If either the inputs `position` and `orientation` are :obj:`None`, the corresponding transformation is not applied.
 
     Args:
-        points (Union[np.ndarray, torch.Tensor, wp.array]): An array of shape (N, 3) comprising of 3D points in source frame.
-        position (Optional[Sequence[float]], optional): The position of source frame in target frame. Defaults to None.
+        points (Union[np.ndarray, torch.Tensor, wp.array]): An array of shape (N, 3) comprising of 3D points in source frame.由源坐标系中的3D点组成的形状为(N, 3)的数组。
+        position (Optional[Sequence[float]], optional): The position of source frame in target frame. Defaults to None.源帧在目标帧中的位置。
         orientation (Optional[Sequence[float]], optional): The orientation ``(w, x, y, z)`` of source frame in target frame.
             Defaults to None.
         device (Optional[Union[torch.device, str]], optional): The device for torch where the computation
@@ -175,6 +178,9 @@ def create_pointcloud_from_rgbd(
     This function provides the same functionality as :meth:`create_pointcloud_from_depth` but also allows
     to provide the RGB values for each point.
 
+    从输入深度图像和相机变换矩阵创建点云。
+    这个函数提供了与:meth: ' create_pointcloud_from_depth '相同的功能，但也允许为每个点提供RGB值。
+    
     The ``rgb`` attribute is used to resolve the corresponding point's color:
 
     - If a ``np.array``/``wp.arrray``/``torch.tensor`` of shape (H, W, 3), then the corresponding channels encode RGB values.
