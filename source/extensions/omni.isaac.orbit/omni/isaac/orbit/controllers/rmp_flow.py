@@ -131,7 +131,11 @@ class RmpFlowController:
             )
             # command 0:3 是目标位置target position，3:7是目标方向target orientation
             # apply action on the robot 将动作应用到机器人上（获得关节的下一个动作）
-            action = policy.get_next_articulation_action()
+            action = policy.get_next_articulation_action()  
+           
+            # ！！！policy.get_next_articulation_action()这个函数在哪里能看？想看是如何得到joint_positions和joint_velocities的！！！
+            # ！！！能否使用这个函数，将mpinets的输出（qt点或者qt+1）转化成orbit中的关节的下一个位置，关节的下一个速度，这样可以直接将这些输出作为orbit接下来可视化或是其他模块的输入了！！！
+            
             # copy actions into buffer
             # TODO: Make this more efficient?
             for dof_index in range(self.num_dof):
